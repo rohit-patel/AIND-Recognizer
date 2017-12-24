@@ -75,9 +75,22 @@ class SelectorBIC(ModelSelector):
         :return: GaussianHMM object
         """
         warnings.filterwarnings("ignore", category=DeprecationWarning)
-
-        # TODO implement model selection based on BIC scores
-        raise NotImplementedError
+        leading_score = float('inf')
+        best_model = None
+        for number_of_states in range(self.min_n_components, self.max_n_components + 1):
+            try:
+                current_model = self.base_model(number_of_states)
+                log_likelihood = current_model.score(self.X, self.lengths)
+                number_of_data_points = sum(self.lengths)
+                '''# estimated parameters = Initial state entry probabilities + For each state, for each feature, the mean and variance of the gaussian distribution must be estimated + Transition probabilities between all pairs of states, multiplied by two in both directions (transition-to-self probabilities are known once all other transition probabilities estimated)'''
+                number_of_estimated_parameters = number_of_states - 1 + number_of_states*(number_of_states-1) + number_of_states*self.X.shape[1]*2
+                bic_score = (number_of_estimated_parameters*np.log(sum(self.lengths))) - (2*log_likelihood)
+                if bic_score < leading_score:
+                    leading_score = bic_score
+                    best_model = current_model
+            except:
+                pass
+        return best_model 
 
 
 class SelectorDIC(ModelSelector):
@@ -92,9 +105,20 @@ class SelectorDIC(ModelSelector):
 
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
-
-        # TODO implement model selection based on DIC scores
-        raise NotImplementedError
+        leading_score = float('-inf')
+        best_model = None
+        for number_of_states in range(self.min_n_components, self.max_n_components + 1):
+            try:
+                current_model = self.base_model(number_of_states)
+                log_likelihood = current_model.score(self.X, self.lengths)
+                mean_of_antilikelihoods = np.mean([current_model.score(self.hwords[word][0],self.hwords[word][1]) for word in self.words if word != self.this_word])
+                dic_score = log_likelihood - mean_of_antilikelihoods
+                if dic_score > leading_score:
+                    leading_score = dic_score
+                    best_model = current_model
+            except:
+                pass
+        return best_model 
 
 
 class SelectorCV(ModelSelector):
@@ -104,6 +128,26 @@ class SelectorCV(ModelSelector):
 
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
-
-        # TODO implement model selection using CV
-        raise NotImplementedError
+        leading_score = float('-inf')
+        best_model = None
+        folder = KFold(n_splits = 3, random_state = None, shuffle = False)
+        for number_of_states in range(self.min_n_components, self.max_n_components + 1):
+            try:
+                current_model = self.base_model(number_of_states)
+                sum_log_likelihood_folds = 0
+                if len(self.sequences) < 3:
+                    sum_log_likelihood_folds = current_model.score(self.X, self.lengths)
+                else:
+                    for train_seq, test_seq in folder.split(self.sequences):
+                        self.X, self.lengths = combine_sequences(train_seq, self.sequences)
+                        test_data, test_lengths = combine_sequences(test_seq, self.sequences)
+                        folded_current_model = self.base_model(number_of_states)
+                        sum_log_likelihood_folds += folded_current_model.score(test_data, test_lengths)
+                if sum_log_likelihood_folds > leading_score:
+                    leading_score = sum_log_likelihood_folds
+                    best_model = current_model
+                self.X, self.lengths = self.hwords[self.this_word]
+                sum_log_likelihood_folds = 0
+            except:
+                pass
+        return best_model 
