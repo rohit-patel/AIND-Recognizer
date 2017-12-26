@@ -44,6 +44,6 @@ The scores from various combination of features and selectors were as follows (l
 | C2 | 0.640449 | 0.601124 | 0.662921 | 0.634831 | 0.601124 |
 | Delta | 0.612360 | 0.612360 | 0.623596 | 0.616105 | 0.612360 |
 | C1 | 0.629213 | 0.646067 | 0.674157 | 0.649813 | 0.629213 |
-| Mean | 0.528090 | 0.555056 | 0.555337 | 0.546161 | 0.521910 |
+| **Mean** | **0.528090** | **0.555056** | **0.555337** | **0.546161** |  |
 
 The best performing combination was **Polar + Delta + C1 with a BIC selector**.
