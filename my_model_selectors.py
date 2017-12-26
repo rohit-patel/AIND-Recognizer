@@ -73,6 +73,8 @@ class SelectorBIC(ModelSelector):
         BIC score for n between self.min_n_components and self.max_n_components
 
         :return: GaussianHMM object
+
+        Number of estimated parameters = Initial state entry probabilities + For each state, for each feature, the mean and variance of the gaussian distribution must be estimated + Transition probabilities between all pairs of states, multiplied by two in both directions (transition-to-self probabilities are known once all other transition probabilities estimated)
         """
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         leading_score = float('inf')
@@ -82,7 +84,6 @@ class SelectorBIC(ModelSelector):
                 current_model = self.base_model(number_of_states)
                 log_likelihood = current_model.score(self.X, self.lengths)
                 number_of_data_points = sum(self.lengths)
-                '''# estimated parameters = Initial state entry probabilities + For each state, for each feature, the mean and variance of the gaussian distribution must be estimated + Transition probabilities between all pairs of states, multiplied by two in both directions (transition-to-self probabilities are known once all other transition probabilities estimated)'''
                 number_of_estimated_parameters = number_of_states - 1 + number_of_states*(number_of_states-1) + number_of_states*self.X.shape[1]*2
                 bic_score = (number_of_estimated_parameters*np.log(sum(self.lengths))) - (2*log_likelihood)
                 if bic_score < leading_score:
